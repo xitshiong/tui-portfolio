@@ -1,14 +1,11 @@
-FROM ubuntu:22.04
+FROM node:20-slim
 
-# Install Node.js, ttyd, and curl
-RUN apt-get update && apt-get install -y \
-    curl \
-    ca-certificates \
-    gnupg \
-    ttyd \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y node.js \
-    && rm -rf /var/lib/apt/lists/*
+# Install basic tools and download ttyd binary directly
+RUN apt-get update && apt-get install -y curl && \
+    curl -LO https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
+    mv ttyd.x86_64 /usr/local/bin/ttyd && \
+    chmod +x /usr/local/bin/ttyd && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
