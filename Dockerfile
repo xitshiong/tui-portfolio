@@ -1,7 +1,7 @@
 FROM node:20-slim
 
-# Install SSH server and other tools
-RUN apt-get update && apt-get install -y openssh-server curl && \
+# Install SSH and ttyd (the web terminal)
+RUN apt-get update && apt-get install -y openssh-server ttyd curl && \
     mkdir /var/run/sshd && \
     rm -rf /var/lib/apt/lists/*
 
@@ -13,17 +13,16 @@ RUN npm install && npm install -g tsx
 
 COPY . .
 
-# 1. Create a guest user for visitors
-# 2. Set an empty password (allowing anyone to login)
-# 3. FORCE the user to run your React app instead of a shell
+# Setup the guest user for SSH access
 RUN useradd -m -s /usr/bin/tsx guest && \
     passwd -d guest && \
     echo "ForceCommand tsx /app/src/index.tsx" >> /etc/ssh/sshd_config && \
     echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config && \
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
 
-# Expose port 22 for SSH
+# Expose both the Web (8080) and SSH (22) ports
+EXPOSE 8080
 EXPOSE 22
 
-# Start the SSH daemon in the foreground
-CMD ["/usr/sbin/sshd", "-D"]
+# The MAGIC command: Starts SSH in background (&) then starts the Web terminal
+CMD /usr/sbin/sshd && ttyd -p 8080 tsx src/index.tsx
