@@ -1,8 +1,11 @@
 FROM node:20-slim
 
-# Install SSH and ttyd (the web terminal)
-RUN apt-get update && apt-get install -y openssh-server ttyd curl && \
+# Install SSH and dependencies to download ttyd
+RUN apt-get update && apt-get install -y openssh-server curl && \
     mkdir /var/run/sshd && \
+    # Download the ttyd binary directly since it's not in the slim repo
+    curl -Lo /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
+    chmod +x /usr/local/bin/ttyd && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -24,5 +27,5 @@ RUN useradd -m -s /usr/bin/tsx guest && \
 EXPOSE 8080
 EXPOSE 22
 
-# The MAGIC command: Starts SSH in background (&) then starts the Web terminal
+# Start SSH in background and Web terminal in foreground
 CMD /usr/sbin/sshd && ttyd -p 8080 tsx src/index.tsx
