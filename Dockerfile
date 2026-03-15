@@ -20,14 +20,19 @@ RUN apt-get update && apt-get install -y openssh-server curl && \
     chmod +x /usr/local/bin/ttyd
 
 # 2. Setup user and SET PASSWORD TO 'guest'
+# We use -p with a pre-hashed password to ensure it definitely sticks
 RUN useradd -m -s /usr/bin/tsx guest && \
-    echo "guest:guest" | chpasswd
+    echo "guest:guest" | chpasswd && \
+    chown -R guest:guest /app
 
-# 3. Simple SSH config
+# 3. Completely Rewrite SSH Config
 RUN echo "Port 22" > /etc/ssh/sshd_config && \
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config && \
+    echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config && \
     echo "UsePAM yes" >> /etc/ssh/sshd_config && \
+    echo "AllowUsers guest" >> /etc/ssh/sshd_config && \
+    echo "PrintMotd no" >> /etc/ssh/sshd_config && \
     echo "ForceCommand tsx /app/src/index.tsx" >> /etc/ssh/sshd_config
 # Expose Web (8080) and SSH (22)
 EXPOSE 8080
