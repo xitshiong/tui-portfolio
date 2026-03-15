@@ -15,15 +15,12 @@ COPY . .
 
 # Setup the guest user with NO password and SSH permissions
 # Setup the guest user and fix ALL password restrictions
+# Setup the guest user with a simple password
 RUN useradd -m -s /usr/bin/tsx guest && \
-    passwd -d guest && \
-    # 1. Allow empty passwords in SSH config
-    echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config && \
+    echo "guest:guest" | chpasswd && \
+    # Standard SSH configs
     echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
-    echo "UsePAM no" >> /etc/ssh/sshd_config && \
-    echo "ForceCommand tsx /app/src/index.tsx" >> /etc/ssh/sshd_config && \
-    # 2. THE SECRET SAUCE: Allow null passwords in the system's common-auth
-    sed -i 's/nullok_secure/nullok/' /etc/pam.d/common-auth || true
+    echo "ForceCommand tsx /app/src/index.tsx" >> /etc/ssh/sshd_config
 # Expose Web (8080) and SSH (22)
 EXPOSE 8080
 EXPOSE 22
